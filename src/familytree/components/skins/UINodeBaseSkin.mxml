@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		xmlns:mx="library://ns.adobe.com/flex/mx"
+		width="150" height="90"
+		initialize="init()">
+	<!-- host component -->
+	<fx:Metadata>
+		[HostComponent("familytree.components.UINode")]
+	</fx:Metadata>
+	<fx:Script>
+		<![CDATA[
+			private function init():void {
+				this.addEventListener(MouseEvent.ROLL_OVER, onMouseOver);
+				this.addEventListener(MouseEvent.ROLL_OUT, onMouseOut);
+			}
+			
+			protected function onMouseOver(event:MouseEvent):void {
+				currentState = "Over";
+			}
+			
+			protected function onMouseOut(event:MouseEvent):void {
+				currentState = "Up";
+			}
+			
+		]]>
+	</fx:Script>
+	<s:states>
+		<s:State name="Up"/>
+		<s:State name="Add"/>
+		<s:State name="Over"/>
+	</s:states>
+	
+	<s:Rect  left="0" right="0" top="0" bottom="0" radiusX="8">
+		<s:stroke>
+			<s:SolidColorStroke alpha="1" caps="none" color="#E3E3E3"
+								joints="miter" miterLimit="4" weight="3"/>
+		</s:stroke>
+		<s:fill>
+			<s:LinearGradient rotation="270">
+				<s:GradientEntry alpha="0.1" color="#FFFFFF" ratio="0"/>
+				<s:GradientEntry alpha="0.1" color="#000000" ratio="1"/>
+			</s:LinearGradient>
+		</s:fill>
+	</s:Rect>
+	
+	<s:Rect left="0" right="0" height="40" radiusX="8">
+		<s:fill>
+			<s:SolidColor alpha="0.1" color="#FFFFFF"/>
+		</s:fill>
+	</s:Rect>
+	
+	<s:Group includeIn="Over,Up,Add" left="0" right="0">
+		<s:RichText id="firstNameLabel" y="7" left="0" right="0" color="#E3E3E3" fontFamily="Arial"
+					fontSize="22" fontWeight="bold" tabStops="S0 S50 S100" text="Napoleon"
+					textAlign="center"/>
+		<s:RichText id="lastNameLabel" y="29" left="0" right="0" color="#E3E3E3" fontFamily="Arial"
+					fontSize="22" fontWeight="bold" tabStops="S0 S50 S100" text="Bonaparte"
+					textAlign="center"/>
+		<s:RichText includeIn="Up" id="birthDateLabel" y="55" left="0" right="0" height="15" color="#E3E3E3"
+					fontFamily="Georgia" fontSize="14" fontWeight="bold" tabStops="S0 S50"
+					text="*15.08.1769 " textAlign="center"/>
+		<s:RichText includeIn="Up" id="deathDateLabel" y="70" left="0" right="0" height="15" color="#E3E3E3"
+					fontFamily="Georgia" fontSize="14" fontWeight="bold" tabStops="S0 S50"
+					text="+15.08.1769 " textAlign="center"/>			
+	</s:Group>
+	<s:Group includeIn="Over, Add" left="0" right="0" bottom="0" height="40" buttonMode="false">		
+		<s:Rect left="0" right="0" top="0" bottom="0" radiusX="8">
+			<s:stroke>
+				<s:SolidColorStroke alpha="1" caps="none" color="#E3E3E3"
+									joints="miter" miterLimit="4" weight="3"/>
+			</s:stroke>
+			<!--<s:fill>
+				<s:SolidColor alpha="0.5" color="#FFFFFF"/>
+			</s:fill>-->
+		</s:Rect>	
+		<s:HGroup horizontalCenter="0" verticalCenter="0">
+			<s:Button visible.Add="false" icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" click="currentState='Add'"
+				  toolTip="Dodaj członka rodziny" />
+			<s:Button id="editNodeButton" visible.Add="false" icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" toolTip="Edytuj" />
+			<s:Button visible.Add="false" icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" enabled="false"/>
+			<s:Button visible.Add="false" icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" enabled="false"/>
+		</s:HGroup>
+		<s:HGroup includeIn="Add" horizontalCenter="0" verticalCenter="0">
+			<s:Button id="addMotherButton" icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" toolTip="Dodaj matkę"/>
+			<s:Button id="addFatherButton"  icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" toolTip="Dodaj ojca"/>
+			<s:Button id="addSpouseButton"  icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" toolTip="Dodaj małżonka"/>
+			<s:Button id="addChildButton" icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" toolTip="Dodaj dziecko"/>
+		</s:HGroup>		
+	</s:Group>
+		
+	
+	<s:Group>
+	</s:Group>
+</s:Skin>

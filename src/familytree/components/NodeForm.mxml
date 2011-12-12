@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:fx="http://ns.adobe.com/mxml/2009"
+		  xmlns:s="library://ns.adobe.com/flex/spark"
+		  xmlns:mx="library://ns.adobe.com/flex/mx"
+		  width="278" height="297" horizontalAlign="left" layout="absolute" title="Edycja węzła" xmlns:models="familytree.models.*">
+	<fx:Script>
+		<![CDATA[
+			import familytree.enums.Sex;
+			import familytree.events.AddNodeRequestEvent;
+			import familytree.events.NodeEvent;
+			import familytree.models.Node;
+			
+			[Bindable]
+			private var firstName:String;
+			[Bindable]
+			private var lastName:String;
+			[Bindable]
+			private var isAlive:Boolean;
+			[Bindable]
+			private var birthDate:Date;
+			[Bindable]
+			private var deathDate:Date; 
+			[Bindable]
+			private var sex:int = 0;
+			[Bindable]
+			private var sexLocked:Boolean = false;
+			private var _event:NodeEvent;			
+			public function set event(_event:NodeEvent):void {
+				this._event = _event;
+				if (_event.type == NodeEvent.EDIT_NODE_REQUEST) {
+					node = _event.node;
+					sexLocked = true;
+				} else {
+					reset();
+					var ev:AddNodeRequestEvent = _event as AddNodeRequestEvent;
+					sexLocked = (ev.relation != 'child');
+					sex = ((ev.relation == 'father') || (ev.relation == 'spouse' && ev.node.sex == Sex.FEMALE))?Sex.MALE:Sex.FEMALE;
+				}				
+			}
+			public function get event():NodeEvent {
+				return _event;
+			}
+			
+			public function set node(n:Node):void {
+				firstName = n.firstName;
+				lastName = n.lastName;
+				isAlive = !n.deathDate;
+				birthDate = n.birthDate;
+				deathDate = n.deathDate;
+				sex = n.sex;
+			}
+			
+			public function reset():void {
+				if (!firstNameInput) return;
+				firstNameInput.text = "";
+				lastNameInput.text = "";
+				aliveCheckBox.selected = true;
+				birthDateInput.selectedDate = new Date();
+				deathDateInput.selectedDate = null;
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+	</fx:Declarations>
+	<s:Form width="260" horizontalCenter="0" verticalCenter="0" id="form">
+		<s:layout>
+			<s:FormLayout gap="-8" />
+		</s:layout>
+		<s:FormItem label="Imię">
+			<s:TextInput id="firstNameInput" text="{firstName}"/>
+		</s:FormItem>
+		<s:FormItem label="Nazwisko">
+			<s:TextInput id="lastNameInput" text="{lastName}" />
+		</s:FormItem>
+		<s:FormItem label="Płec">
+			<s:DropDownList id="sexInput" width="127" selectedIndex="{sex}" enabled="{!sexLocked}">
+				<mx:ArrayCollection>
+					<fx:String>Kobieta</fx:String>
+					<fx:String>Mężczyzna</fx:String>
+				</mx:ArrayCollection>
+			</s:DropDownList>
+		</s:FormItem>		
+		<s:FormItem label="Data urodzenia">
+			<mx:DateField id="birthDateInput" yearNavigationEnabled="true" selectedDate="{birthDate}"/>
+		</s:FormItem>
+		<s:FormItem label="Data śmierci">
+			<s:CheckBox id="aliveCheckBox" label="Żyje" selected="{isAlive}"/>
+			<mx:DateField id="deathDateInput" selectedDate="{aliveCheckBox.selected?null:deathDate}" enabled="{!aliveCheckBox.selected}" yearNavigationEnabled="true"/>
+		</s:FormItem>
+		<s:Group width="237" height="33">
+			<s:Button left="0" bottom="0" width="100" label="Anuluj" click="dispatchEvent(new Event(Event.CANCEL))"/>
+			<s:Button right="0" bottom="0" width="100" label="Zapisz"  click="dispatchEvent(new Event(Event.CLOSE))"/>
+		</s:Group>
+		
+	</s:Form>
+</mx:Panel>

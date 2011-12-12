@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:components="familytree.components.*"
+			   xmlns:models="familytree.models.*"
+			   xmlns:services="generated.services.*"
+			   minWidth="955" minHeight="600" initialize="init()">
+	<fx:Script>
+		<![CDATA[		
+			import familytree.components.UINode;
+			import familytree.components.skins.UINodeBaseSkin;
+			import familytree.enums.*;
+			import familytree.events.*;
+			import familytree.models.Node;
+			
+			import generated.valueObjects.GetTreeResponse;
+			import generated.valueObjects.Node;
+			import generated.valueObjects.Relation;
+			
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			
+			import spark.formatters.DateTimeFormatter;			
+			
+			private var nodes:Array = [];
+			
+			protected function init():void {			
+				tree.addEventListener(AddNodeRequestEvent.TYPE, onAddNodeRequest);
+				tree.addEventListener(NodeEvent.EDIT_NODE_REQUEST, onEditNodeRequest);
+				nodeForm.addEventListener(Event.CANCEL, onFormButtonClicked);
+				nodeForm.addEventListener(Event.CLOSE, onFormButtonClicked);
+				getTree();
+			}
+			
+			protected function onAddNodeRequest(event:AddNodeRequestEvent):void {
+				nodeForm.event = event;
+				PopUpManager.addPopUp(nodeForm, this, true);
+				PopUpManager.centerPopUp(nodeForm);
+				/*
+				var newNode:familytree.models.Node = new familytree.models.Node();
+				switch(event.relation) {
+					case AddNodeRequestEvent.CHILD:
+						if (event.node.sex == Sex.MALE)
+							newNode.father = event.node;
+						else newNode.mother = event.node;
+						event.node.children.push(newNode);
+						break;
+					case AddNodeRequestEvent.MOTHER:
+						newNode.children.push(event.node);
+						newNode.sex = Sex.FEMALE;
+						event.node.mother = newNode;
+						if (event.node.father) {
+							newNode.spouse = event.node.father;
+							event.node.father.spouse = newNode;
+						}
+						break;					
+					case AddNodeRequestEvent.FATHER:
+						newNode.children.push(event.node);
+						event.node.father = newNode;
+						if (event.node.mother) {
+							newNode.spouse = event.node.mother;
+							event.node.mother.spouse = newNode;
+						}						
+						break;										
+					case AddNodeRequestEvent.SPOUSE:
+						newNode.spouse = event.node;
+						newNode.sex = event.node.sex == Sex.FEMALE ? Sex.MALE : Sex.FEMALE;
+						newNode.children = event.node.children;
+						event.node.spouse = newNode;
+						break;							
+				}
+				tree.draw();*/
+			}
+			
+			protected function onEditNodeRequest(event:NodeEvent):void {
+				nodeForm.event = event;
+				PopUpManager.addPopUp(nodeForm, this, true);
+				PopUpManager.centerPopUp(nodeForm);
+			}
+			
+			protected function getTree():void
+			{
+				getTreeResult.token = server.getTree();
+			}
+			
+			protected function updateTree(update:GetTreeResponse):void {
+				for each(var nodeObj:generated.valueObjects.Node in update.nodes) {
+					if (!this.nodes[nodeObj.id]) nodes[nodeObj.id] = new familytree.models.Node();
+					var n:familytree.models.Node = nodes[nodeObj.id];
+					n.id = nodeObj.id;
+					n.firstName = nodeObj.firstName;
+					n.lastName = nodeObj.lastName;
+					if(nodeObj.birthDate) {
+						n.birthDate = new Date();
+						n.birthDate.time = Date.parse(nodeObj.birthDate.replace("-", "/").replace("-","/"));
+					} else n.birthDate = null;
+					if(nodeObj.deathDate) {
+						n.deathDate = new Date();
+						n.deathDate.time = Date.parse(nodeObj.deathDate.replace("-", "/").replace("-","/"));
+					} else n.deathDate = null;					
+					n.sex = nodeObj.sex?Sex.MALE:Sex.FEMALE;
+				}
+				for each(var relationObj:Relation in update.relations) {
+					var source:familytree.models.Node = nodes[relationObj.source] as familytree.models.Node;
+					var destination:familytree.models.Node = nodes[relationObj.destination] as familytree.models.Node;
+					if (!source || !destination) continue;
+					switch(relationObj.type) {
+						case Relations.MOTHER:
+							source.mother = destination;
+							destination.children.push(source);
+							break;
+						case Relations.FATHER:
+							source.father = destination;
+							destination.children.push(source);
+							break;						
+						case Relations.SPOUSE:
+							source.spouse = destination;
+							destination.spouse = source;
+							break;						
+					}					
+				}
+				tree.treeRoot = this.nodes[update.defaultRoot];
+				tree.draw();
+			}
+			
+			protected function onFormButtonClicked(event:Event):void {
+				if (event.type == Event.CANCEL)
+					PopUpManager.removePopUp(nodeForm);
+				else {
+					var d:DateTimeFormatter = new DateTimeFormatter();
+					d.dateTimePattern = "yyyy-M-d";
+					
+					if (nodeForm.event.type == NodeEvent.EDIT_NODE_REQUEST) {
+						editNode(nodeForm.event.node.id,
+								 nodeForm.firstNameInput.text,
+								 nodeForm.lastNameInput.text,
+								 d.format(nodeForm.birthDateInput.selectedDate),
+								 d.format(nodeForm.deathDateInput.selectedDate),
+								 nodeForm.sexInput.selectedIndex);
+					} else {
+						var addEvent:AddNodeRequestEvent = nodeForm.event as AddNodeRequestEvent;
+						editNode(0,
+							nodeForm.firstNameInput.text,
+							nodeForm.lastNameInput.text,
+							d.format(nodeForm.birthDateInput.selectedDate),
+							d.format(nodeForm.deathDateInput.selectedDate),
+							nodeForm.sexInput.selectedIndex,
+							addEvent.node.id,
+							addEvent.relation);
+					}
+				}
+			}
+			
+			protected function editNode(id:int, firstName:String, lastName:String, birthDate:String, deathDate:String, sex:int, source:int = 0, relation:String = null):void
+			{
+				editNodeResult.token = server.editNode(id, firstName, lastName, birthDate, deathDate, sex, source, relation);
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<models:Node id="helenaBrachman" firstName="Helena" lastName="Brachman" spouse="{romanBrachman}" children="{helenaBrachmanChildren}" sex="{Sex.FEMALE}"/>
+		<models:Node id="romanBrachman" firstName="Roman" lastName="Brachman" spouse="{helenaBrachman}" children="{helenaBrachmanChildren}"  sex="{Sex.MALE}"/>
+		<fx:Array id = "helenaBrachmanChildren">
+			<models:Node id="halinaSierny" firstName="Halina" lastName="Sierny" spouse="{eugeniuszSierny}" children="{halinaSiernyChildren}" mother="{helenaBrachman}" father="{romanBrachman}"  sex="{Sex.FEMALE}"/>
+		</fx:Array>	
+		<models:Node id="alojzySierny" firstName="Alojzy" lastName="Sierny" children="{alojzySiernyChildren}"  sex="{Sex.MALE}"/>
+		<fx:Array id = "alojzySiernyChildren">
+			<models:Node id="eugeniuszSierny" firstName="Eugeniusz" lastName="Sierny" spouse="{halinaSierny}" children="{halinaSiernyChildren}"  sex="{Sex.MALE}" father="{alojzySierny}"/>
+		</fx:Array>
+		<models:Node id="annaZurawska" firstName="Anna" lastName="Żurawska" spouse="{michalZurawski}" children="{annaZurawskaChildren}" sex="{Sex.FEMALE}"/>
+		<models:Node id="michalZurawski" firstName="Michal" lastName="Zurawski" spouse="{annaZurawska}" children="{annaZurawskaChildren}"  sex="{Sex.MALE}"/>
+		<fx:Array id = "annaZurawskaChildren">
+			<models:Node id="krystynaWawro" firstName="Krystyna" lastName="Wawro" spouse="{emilWawro}" children="{krystynaWawroChildren}"  sex="{Sex.FEMALE}" mother="{annaZurawska}" father="{michalZurawski}"/>
+		</fx:Array>			
+		<models:Node id="emilWawro" firstName="Emil" lastName="Wawro" spouse="{krystynaWawro}" children="{krystynaWawroChildren}" sex="{Sex.MALE}"/>
+		<fx:Array id = "halinaSiernyChildren">
+			<models:Node id="barbaraWawro" firstName="Barbara" lastName="Wawro" spouse="{jerzyWawro}" children="{barbaraWawroChildren}" mother="{halinaSierny}"  father="{eugeniuszSierny}"  sex="{Sex.FEMALE}"/>
+		</fx:Array>
+		<fx:Array id = "krystynaWawroChildren">
+			<models:Node id="jerzyWawro" firstName="Jerzy" lastName="Wawro" spouse="{barbaraWawro}" children="{barbaraWawroChildren}" mother="{krystynaWawro}" father="{emilWawro}"  sex="{Sex.MALE}"/>
+		</fx:Array>
+		<fx:Array id = "barbaraWawroChildren">
+			<models:Node id="maciejWawro" firstName="Maciej" lastName="Wawro" mother="{barbaraWawro}" father="{jerzyWawro}"  sex="{Sex.MALE}"/>
+			<models:Node id="tomaszWawro" firstName="Tomasz" lastName="Wawro" mother="{barbaraWawro}" father="{jerzyWawro}" sex="{Sex.MALE}" />			
+		</fx:Array>
+		<s:CallResponder id="getTreeResult" result="updateTree(GetTreeResponse(event.result))" />
+		<services:Server id="server"
+						 fault="Alert.show(event.fault.faultString + '\n' + event.fault.faultDetail)"		
+						 showBusyCursor="true"/>
+		<components:NodeForm id="nodeForm" />
+		<s:CallResponder id="editNodeResult" result="updateTree(GetTreeResponse(event.result)); PopUpManager.removePopUp(nodeForm)"/>
+	</fx:Declarations>
+	<s:BitmapImage left="0" right="0" top="0" bottom="0" fillMode="repeat" smooth="false"
+				   source="@Embed('assets/tile.png')"/> 
+	<s:Scroller horizontalCenter="0" bottom = "10" maxHeight="{this.height - 20}">
+		<components:Tree id="tree" treeRoot="{maciejWawro}" />
+	</s:Scroller>
+	
+
+</s:Application>

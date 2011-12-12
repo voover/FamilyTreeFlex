@@ -1,0 +1,128 @@
+
+<model xmlns="http://ns.adobe.com/Fiber/1.0">
+  <annotation name="ActionScriptGeneration">
+    <item name="FullyQualifyReferences">true</item>
+  </annotation>
+  <service name="Server">
+    <annotation name="ActionScriptGeneration">
+      <item name="ServiceType">HTTPMultiService</item>
+      <item name="Package">generated.services</item>
+      <item name="rootURL">http://localhost/familytree/</item>
+    </annotation>
+    <annotation name="ServiceTypeGroup">
+      <item name="ServiceBackendType">HTTPService</item>
+    </annotation>
+    <annotation name="ServiceConfig">
+      <item name="DEFAULT_ENTITY_PACKAGE">generated.valueObjects</item>
+      <item name="LINKED_FILE"></item>
+    </annotation>
+    <function name="getTree" return-type="GetTreeResponse">
+      <annotation name="analyze group">
+        <item name="analyzed">true</item>
+      </annotation>
+      <annotation name="ActionScriptGeneration">
+        <item name="SerializationFilter">com.adobe.serializers.json.JSONSerializationFilter</item>
+        <item name="method">GET</item>
+        <item name="url">get.php</item>
+      </annotation>
+      <annotation name="url group">
+        <item name="completeURL">http://localhost/familytree/get.php</item>
+      </annotation>
+      <annotation name="ValidProperties">
+        <item name="propertySpecifier">relations,nodes,defaultRoot</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="returnType">opaque</item>
+      </annotation>
+    </function>
+    <function name="editNode" return-type="GetTreeResponse">
+      <annotation name="analyze group">
+        <item name="analyzed">true</item>
+      </annotation>
+      <annotation name="ActionScriptGeneration">
+        <item name="SerializationFilter">com.adobe.serializers.json.JSONSerializationFilter</item>
+        <item name="method">GET</item>
+        <item name="url">editnode.php</item>
+      </annotation>
+      <annotation name="url group">
+        <item name="completeURL">http://localhost/familytree/editnode.php</item>
+      </annotation>
+      <annotation name="ValidProperties">
+        <item name="propertySpecifier">relations,nodes,defaultRoot</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="returnType">opaque</item>
+        <item name="inputParamNames">id,firstName,lastName,birthDate,deathDate,sex,source,relation</item>
+        <item name="inputParams">integer,string,string,string,string,integer,integer,string</item>
+      </annotation>
+      <parameter name="id" type="integer"/>
+      <parameter name="firstName" type="string"/>
+      <parameter name="lastName" type="string"/>
+      <parameter name="birthDate" type="string"/>
+      <parameter name="deathDate" type="string"/>
+      <parameter name="sex" type="integer"/>
+      <parameter name="source" type="integer"/>
+      <parameter name="relation" type="string"/>
+    </function>
+  </service>
+  <entity name="Relation">
+    <annotation name="EntityProperties">
+      <item name="EntityOriginalName">Relations</item>
+    </annotation>
+    <annotation name="service Group">
+      <item name="service">Server</item>
+    </annotation>
+    <annotation name="ServerProperties">
+      <item name="IncludeRemoteClass">nonempty</item>
+    </annotation>
+    <annotation name="ActionScriptGeneration">
+      <item name="Package">generated.valueObjects</item>
+    </annotation>
+    <property name="source" type="integer"/>
+    <property name="type" type="string"/>
+    <property name="destination" type="integer"/>
+  </entity>
+  <entity name="Node">
+    <annotation name="EntityProperties">
+      <item name="EntityOriginalName">Nodes</item>
+    </annotation>
+    <annotation name="service Group">
+      <item name="service">Server</item>
+    </annotation>
+    <annotation name="ServerProperties">
+      <item name="IncludeRemoteClass">nonempty</item>
+    </annotation>
+    <annotation name="ActionScriptGeneration">
+      <item name="Package">generated.valueObjects</item>
+    </annotation>
+    <property name="id" type="integer"/>
+    <property name="lastName" type="string"/>
+    <property name="sex" type="boolean"/>
+    <property name="birthDate" type="string"/>
+    <property name="firstName" type="string"/>
+    <property name="deathDate" type="string"/>
+  </entity>
+  <entity name="GetTreeResponse">
+    <annotation name="EntityProperties">
+      <item name="EntityOriginalName">GetTreeResponse</item>
+    </annotation>
+    <annotation name="service Group">
+      <item name="service">Server</item>
+    </annotation>
+    <annotation name="ServerProperties">
+      <item name="IncludeRemoteClass">nonempty</item>
+    </annotation>
+    <annotation name="getTree">
+      <item name="propertySpecifier">relations,nodes,defaultRoot</item>
+    </annotation>
+    <annotation name="ActionScriptGeneration">
+      <item name="Package">generated.valueObjects</item>
+    </annotation>
+    <annotation name="editNode">
+      <item name="propertySpecifier">relations,nodes,defaultRoot</item>
+    </annotation>
+    <property name="relations" type="Relation[]"/>
+    <property name="nodes" type="Node[]"/>
+    <property name="defaultRoot" type="integer"/>
+  </entity>
+</model>
