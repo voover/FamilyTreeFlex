@@ -78,8 +78,8 @@
 			<s:Button visible.Add="false" icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" click="currentState='Add'"
 				  toolTip="Dodaj członka rodziny" />
 			<s:Button id="editNodeButton" visible.Add="false" icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" toolTip="Edytuj" />
-			<s:Button visible.Add="false" icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" enabled="false"/>
-			<s:Button visible.Add="false" icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" enabled="false"/>
+			<s:Button id="treeDownButton" visible.Add="false" icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" toolTip="Pokaż potomstwo"/>
+			<s:Button id="treeUpButton"   visible.Add="false" icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" toolTip="Pokaż przodków" />
 		</s:HGroup>
 		<s:HGroup includeIn="Add" horizontalCenter="0" verticalCenter="0">
 			<s:Button id="addMotherButton" icon="assets/iconAdd.png" skinClass="familytree.components.skins.Test" buttonMode="true" toolTip="Dodaj matkę"/>

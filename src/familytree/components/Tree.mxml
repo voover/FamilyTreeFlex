@@ -2,141 +2,100 @@
 <s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		 xmlns:s="library://ns.adobe.com/flex/spark" 
 		 xmlns:mx="library://ns.adobe.com/flex/mx"
-		 xmlns:models="familytree.models.*">
+		 xmlns:models="familytree.models.*"
+		 xmlns:layouts="familytree.components.layouts.*">
+	<s:layout>
+		<!--<s:BasicLayout />-->
+		<layouts:BasicTreeLayout root="{treeRoot}" mode="{mode}" direction="{BasicTreeLayout.UP}" id="myLayout"/>	
+	</s:layout>
+	
 	<fx:Script>
 		<![CDATA[
 			import familytree.components.UINode;
 			import familytree.components.skins.UINodeBaseSkin;
+			import familytree.enums.Sex;
 			import familytree.events.AddNodeRequestEvent;
 			import familytree.models.Node;
-			import familytree.enums.Sex;
+			
 			import mx.messaging.AbstractConsumer;
+			import mx.messaging.errors.NoChannelAvailableError;
+			
+			import spark.layouts.BasicLayout;
 			
 			private var _uiNodes:Array = [];
 			protected function getUINode(n:Node):UINode {
-				if (!_uiNodes[n.id]) {
-					var uiNode:UINode = new UINode();
-					uiNode.setStyle("skinClass",familytree.components.skins.UINodeBaseSkin);
-					uiNode.node = n;		
-					_uiNodes[n.id] = uiNode;
-				}
-				return _uiNodes[n.id];
-			}
-			
-			protected function moveNode(n:Node, x:int, y:int):void {
-				var uiNode:UINode = getUINode(n);
-				uiNode.x += x;
-				uiNode.y += y;
-				if (n.mother) moveNode(n.mother, x, y);
-				if (n.father) moveNode(n.father, x, y);
-			}
-			
-			protected function placeNode(n:Node):Array {
-				var uiNode:UINode = getUINode(n);
-				uiNode.x = uiNode.y = 0;
-				nodes.addElement(uiNode);					
-				
-				if (n.mother && n.father) { 
-					var resultMother:Array = placeNode(n.mother);
-					var resultFather:Array = placeNode(n.father);
+				return UINodeFactory.get(n);
+			}					
 					
-					var minDist:int = 0xffff;					
-					for (var i:int = 0; i < Math.min(resultFather.length, resultMother.length); ++i)
-						minDist = Math.min(minDist, resultFather[i][0] - resultMother[i][1]);
-					
-					moveNode(n.mother, 0, -120);
-					moveNode(n.father, -minDist + 20, -120);
-					
-					uiNode.x = (getUINode(n.mother).x + getUINode(n.father).x) / 2;
-					
-					var result:Array = [[uiNode.x, uiNode.x+150]];
-					for (var i:int = 0; i < Math.max(resultMother.length, resultFather.length); ++i) {
-						var left:int = resultMother[i]?resultMother[i][0]:resultFather[i][0];
-						var right:int = resultFather[i]?resultFather[i][1] - minDist + 20 : resultMother[i][1];
-						result.push([left,right]);
-					}
-					return result;
-				} else if (n.mother || n.father) {
-					var parent:Node = n.mother?n.mother : n.father;
-					var result:Array = placeNode (parent);
-					moveNode(parent, 0, -120);
-					uiNode.x = result[0][0];
-					result.unshift([uiNode.x, uiNode.x+150]);
-					return result;
-				}		
-				
-				var result:Array = [[uiNode.x, uiNode.x+150]];				
-				return result;
-			}
-			
-			private var __width:int = 0;
-			private var __height:int = 0;
-			protected function placeNodes():void {
-				var result:Array = placeNode(treeRoot);
-				var uiNode:UINode = getUINode(treeRoot);
-				
-				var left:int = 0xffff;// 1440/2-75-uiNode.x;
-				var right:int = -0xffff;
-				
-				for(var i:int = 0; i< result.length; ++i) {
-					left = Math.min(left, result[i][0]);
-					right = Math.max(right, result[i][1]);
-				}
-				moveNode(treeRoot, -left+10, 120*result.length - 110);
-				__width = right - left + 20;
-				__height = 120*result.length - 10;
-				invalidateSize();
-			}
-			
-			protected override function measure():void {
-				measuredWidth = measuredMinWidth = __width;
-				measuredHeight = measuredMinHeight = __height;
-			}
-			
-			protected function drawLines(n:Node = null):void {			
-				if (!n) {
-					lines.graphics.clear();
-					lines.graphics.lineStyle(3, 0xE3E3E3);
-					n = treeRoot;
-				}
-				var uiNode:UINode = getUINode(n);	
-				
-				if (n.mother || n.father) {
-					lines.graphics.moveTo(uiNode.x + 75, uiNode.y);
-					lines.graphics.lineTo(uiNode.x + 75, uiNode.y - 15);
-				}
-				if (n.mother) drawLines(n.mother);
-				if (n.father) drawLines(n.father);
-				
-				if (n.children.length > 0) {
-					lines.graphics.moveTo(uiNode.x + 75, uiNode.y + 90);
-					lines.graphics.lineTo(uiNode.x + 75, uiNode.y + 105);
-					if (n.spouse && n.sex==Sex.FEMALE) {
-						lines.graphics.lineTo(getUINode(n.spouse).x + 75, uiNode.y + 105);	
-					}
+			protected function addNode(n:Node, withSpouse:Boolean = false):void {
+				addElement(UINodeFactory.get(n));
+				if (this.mode == BasicTreeLayout.ANCESTRY) {
+					if (n.mother) addNode(n.mother, false);
+					if (n.father) addNode(n.father, false);
 				} else {
-					if (n.spouse && n.sex==Sex.FEMALE) {
-						lines.graphics.moveTo(uiNode.x + 150, uiNode.y + 45);
-						lines.graphics.moveTo(uiNode.x + 150, uiNode.y + 55);
+					for each(var c:Node in n.children) {
+						addNode(c, true);
 					}
 				}
+				if (withSpouse && n.spouse)
+					addElement(UINodeFactory.get(n.spouse));
 			}
-			
-			public function draw():void {
-				nodes.removeAllElements();			
-				placeNodes();
-				drawLines();
-				verticalScrollPosition = contentHeight - height;
-			}	
+						
+			protected override function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void {
+				super.updateDisplayList(unscaledWidth, unscaledHeight);
+			//	drawLines();
+			}
 			
 			protected override function commitProperties():void {
 				super.commitProperties();
-				draw();
+				if(_treeRootChanged) update();
 			}
+			
+			public function update():void {
+				if(!treeRoot) return;
+				for(var i:int = 0; i < this.numElements; ++i)
+					if (this.getElementAt(i) is UINode) {
+						this.removeElementAt(i);
+						i--;
+					}
+				addNode(treeRoot, true);
+				invalidateDisplayList();	
+				_treeRootChanged = false;
+			}
+			
+			private var _treeRoot:Node;
+			private var _treeRootChanged:Boolean;
+			[Bindable]
+			public function set treeRoot(t:Node):void {
+				_treeRoot = t;
+				_treeRootChanged = true;				
+				invalidateProperties();
+			}
+			public function get treeRoot():Node {
+				return _treeRoot;
+			}
+			
+			private var _mode:int = BasicTreeLayout.ANCESTRY;
+
+			[Bindable]
+			public function get mode():int
+			{
+				return _mode;
+			}
+
+			public function set mode(value:int):void
+			{
+				_mode = value;
+				myLayout.direction = (value == BasicTreeLayout.ANCESTRY)?BasicTreeLayout.UP : BasicTreeLayout.DOWN;
+				_treeRootChanged = true;				
+				invalidateProperties();				
+			}
+
+			
 		]]>
 	</fx:Script>
 	<fx:Declarations>
-		<models:Node id="treeRoot" />
+	<!--	<models:Node id="treeRoot" />-->
 	</fx:Declarations>
 	<s:SpriteVisualElement id="lines" />
 	<s:Group id="nodes" />	

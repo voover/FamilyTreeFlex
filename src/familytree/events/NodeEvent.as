@@ -9,6 +9,8 @@ package familytree.events
 	
 		public var node:Node;
 		public static const EDIT_NODE_REQUEST:String = "editNodeRequest";
+		public static const TREE_DOWN_BUTTON:String = "treeDown";
+		public static const TREE_UP_BUTTON:String = "treeUp";
 		
 		public function NodeEvent(type:String, node:Node)
 		{

@@ -1,9 +1,9 @@
 package familytree.components
 {
 	
+	import familytree.enums.Relations;
 	import familytree.events.*;
 	import familytree.models.Node;
-	import familytree.enums.Relations;
 	
 	import flash.display.Sprite;
 	import flash.events.Event;
@@ -47,12 +47,19 @@ package familytree.components
 		[SkinPart]
 		public var editNodeButton:ButtonBase;
 		
+		[SkinPart]
+		public var treeDownButton:ButtonBase;
+		
+		[SkinPart]
+		public var treeUpButton:ButtonBase;		
+		
 		private var dateFormatter:DateTimeFormatter = new DateTimeFormatter();
 		
 		public function UINode()
 		{
 			super();
 			dateFormatter.dateTimePattern = "dd.MM.yyyy";
+			includeInLayout = false;
 			//init();
 		}
 		
@@ -113,6 +120,12 @@ package familytree.components
 			if (instance == editNodeButton) {
 				editNodeButton.addEventListener(MouseEvent.CLICK, onButtonClicked);
 			}
+			if (instance == treeDownButton) {
+				treeDownButton.addEventListener(MouseEvent.CLICK, onButtonClicked);
+			}
+			if (instance == treeUpButton) {
+				treeUpButton.addEventListener(MouseEvent.CLICK, onButtonClicked);
+			}			
 		}
 		
 		protected function onButtonClicked(event:MouseEvent):void {
@@ -122,12 +135,13 @@ package familytree.components
 			if (event.target == addChildButton) dispatchEvent(new AddNodeRequestEvent(this.node, Relations.CHILD));
 			if (event.target == addSpouseButton) dispatchEvent(new AddNodeRequestEvent(this.node, Relations.SPOUSE));
 			if (event.target == editNodeButton) dispatchEvent(new NodeEvent(NodeEvent.EDIT_NODE_REQUEST, this.node));
+			if (event.target == treeDownButton) dispatchEvent(new NodeEvent(NodeEvent.TREE_DOWN_BUTTON, this.node));
+			if (event.target == treeUpButton) dispatchEvent(new NodeEvent(NodeEvent.TREE_UP_BUTTON, this.node));
 		}
 		
 		override protected function partRemoved(partName:String, instance:Object) : void
 		{
 			super.partRemoved(partName, instance);
 		}
-		
 	}
 }

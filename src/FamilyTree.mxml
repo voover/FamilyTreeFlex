@@ -9,6 +9,7 @@
 	<fx:Script>
 		<![CDATA[		
 			import familytree.components.UINode;
+			import familytree.components.layouts.BasicTreeLayout;
 			import familytree.components.skins.UINodeBaseSkin;
 			import familytree.enums.*;
 			import familytree.events.*;
@@ -19,16 +20,28 @@
 			import generated.valueObjects.Relation;
 			
 			import mx.controls.Alert;
+			import mx.core.FlexGlobals;
 			import mx.managers.PopUpManager;
 			import mx.rpc.events.ResultEvent;
 			
-			import spark.formatters.DateTimeFormatter;			
+			import spark.formatters.DateTimeFormatter;
 			
 			private var nodes:Array = [];
 			
 			protected function init():void {			
+				var host:String = FlexGlobals.topLevelApplication.url; 
+				var pattern1:RegExp = new RegExp("http://[^/]*/"); 
+				if (pattern1.test(host) == true) { 
+					host = pattern1.exec(host).toString() + "familytree/"; 
+				} else{ 
+					host = "http://localhost/familytree/" 
+				}  				
+				server.serverAddress = host;
+				
 				tree.addEventListener(AddNodeRequestEvent.TYPE, onAddNodeRequest);
 				tree.addEventListener(NodeEvent.EDIT_NODE_REQUEST, onEditNodeRequest);
+				tree.addEventListener(NodeEvent.TREE_DOWN_BUTTON, onChangeRoot);
+				tree.addEventListener(NodeEvent.TREE_UP_BUTTON, onChangeRoot);
 				nodeForm.addEventListener(Event.CANCEL, onFormButtonClicked);
 				nodeForm.addEventListener(Event.CLOSE, onFormButtonClicked);
 				getTree();
@@ -121,8 +134,14 @@
 							break;						
 					}					
 				}
-				tree.treeRoot = this.nodes[update.defaultRoot];
-				tree.draw();
+				/*
+				//tree.treeRoot = this.nodes[update.defaultRoot];
+				var event:AddNodeRequestEvent = nodeForm.event as AddNodeRequestEvent;
+				if (event) {
+					if (
+					
+				*/
+				//tree.inva
 			}
 			
 			protected function onFormButtonClicked(event:Event):void {
@@ -156,6 +175,20 @@
 			protected function editNode(id:int, firstName:String, lastName:String, birthDate:String, deathDate:String, sex:int, source:int = 0, relation:String = null):void
 			{
 				editNodeResult.token = server.editNode(id, firstName, lastName, birthDate, deathDate, sex, source, relation);
+				if ((tree.mode == BasicTreeLayout.ANCESTRY) && (relation == Relations.CHILD || relation == Relations.SPOUSE)) {
+					tree.mode = BasicTreeLayout.OFFSPRING;
+					tree.treeRoot = nodeForm.event.node;
+				}
+				
+				if ((tree.mode == BasicTreeLayout.OFFSPRING) && (relation == Relations.MOTHER || relation == Relations.FATHER)) {
+					tree.mode = BasicTreeLayout.ANCESTRY;
+					tree.treeRoot = nodeForm.event.node;
+				}				
+			}
+			
+			protected function onChangeRoot(event:NodeEvent):void {
+				tree.mode = event.type == NodeEvent.TREE_DOWN_BUTTON ? BasicTreeLayout.OFFSPRING : BasicTreeLayout.ANCESTRY;
+				tree.treeRoot = event.node;				
 			}
 			
 		]]>
@@ -186,12 +219,12 @@
 			<models:Node id="maciejWawro" firstName="Maciej" lastName="Wawro" mother="{barbaraWawro}" father="{jerzyWawro}"  sex="{Sex.MALE}"/>
 			<models:Node id="tomaszWawro" firstName="Tomasz" lastName="Wawro" mother="{barbaraWawro}" father="{jerzyWawro}" sex="{Sex.MALE}" />			
 		</fx:Array>
-		<s:CallResponder id="getTreeResult" result="updateTree(GetTreeResponse(event.result))" />
+		<s:CallResponder id="getTreeResult" result="updateTree(GetTreeResponse(event.result)); tree.treeRoot = nodes[event.result.defaultRoot]" />
 		<services:Server id="server"
 						 fault="Alert.show(event.fault.faultString + '\n' + event.fault.faultDetail)"		
 						 showBusyCursor="true"/>
 		<components:NodeForm id="nodeForm" />
-		<s:CallResponder id="editNodeResult" result="updateTree(GetTreeResponse(event.result)); PopUpManager.removePopUp(nodeForm)"/>
+		<s:CallResponder id="editNodeResult" result="updateTree(GetTreeResponse(event.result)); PopUpManager.removePopUp(nodeForm); tree.update()"/>
 	</fx:Declarations>
 	<s:BitmapImage left="0" right="0" top="0" bottom="0" fillMode="repeat" smooth="false"
 				   source="@Embed('assets/tile.png')"/> 

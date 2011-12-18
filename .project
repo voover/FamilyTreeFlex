@@ -21,5 +21,10 @@
 			<type>2</type>
 			<location>C:/xampp/htdocs/familytree</location>
 		</link>
+		<link>
+			<name>bin-release1</name>
+			<type>2</type>
+			<location>C:/xampp/htdocs/familytree/front</location>
+		</link>
 	</linkedResources>
 </projectDescription>

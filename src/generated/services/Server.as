@@ -18,7 +18,10 @@ public class Server extends _Super_Server
         super.preInitializeService();
         // Initialization customization goes here
     }
-               
+ 
+	public function set serverAddress(address:String):void {
+		this._serviceControl.baseURL = address;
+	}	
 }
 
 }
